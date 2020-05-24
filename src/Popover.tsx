@@ -153,26 +153,19 @@ class Popover extends React.Component<PopoverProps, PopoverState> {
                     const targetRect = this.target.current.getBoundingClientRect();
                     const popoverRect = this.popoverDiv.getBoundingClientRect();
                     ({ top, left } = typeof contentLocation === 'function' ? contentLocation({ targetRect, popoverRect, position, align, nudgedLeft, nudgedTop }) : contentLocation);
-                    this.popoverDiv.style.left = `${left.toFixed()}px`;
-                    this.popoverDiv.style.top = `${top.toFixed()}px`;
                 } else {
-                    let destinationTopOffset = 0;
-                    let destinationLeftOffset = 0;
-
                     if (this.props.contentDestination) {
                         const destRect = this.props.contentDestination.getBoundingClientRect();
-                        destinationTopOffset = -destRect.top;
-                        destinationLeftOffset = -destRect.left;
+                        top -= destRect.top;
+                        left -= destRect.left;
+                    } else {
+                        top += window.pageYOffset;
+                        left += window.pageXOffset;
                     }
-
-                    const [absoluteTop, absoluteLeft] = [top + window.pageYOffset, left + window.pageXOffset];
-                    const finalLeft = absoluteLeft + destinationTopOffset;
-                    const finalTop = absoluteTop + destinationLeftOffset;
-
-                    this.popoverDiv.style.left = `${finalLeft.toFixed()}px`;
-                    this.popoverDiv.style.top = `${finalTop.toFixed()}px`;
                 }
 
+                this.popoverDiv.style.left = `${left.toFixed()}px`;
+                this.popoverDiv.style.top = `${top.toFixed()}px`;
                 this.popoverDiv.style.width = null;
                 this.popoverDiv.style.height = null;
 
