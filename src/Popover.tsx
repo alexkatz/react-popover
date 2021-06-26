@@ -167,16 +167,33 @@ export const Popover = forwardRef<HTMLElement, PopoverProps>(
 
     const handleOnClickOutside = useCallback(
       (e: MouseEvent) => {
+        let haveSelection = window.getSelection().toString().length > 0;
         if (
           isOpen &&
           !popoverRef?.current?.contains(e.target as Node) &&
           !childRef?.current?.contains(e.target as Node)
         ) {
-          onClickOutside?.(e);
+          if(window.preventPopoverClose && haveSelection){
+            window.clickStartedInPopover = false
+            window.preventPopoverClose = false
+          } else {
+            onClickOutside?.(e);
+          }
         }
       },
       [isOpen, onClickOutside, popoverRef],
     );
+
+    const handleMouseDown = useCallback((e: MouseEvent) => {
+      window.clickStartedInPopover = popoverRef.current.contains(e.target as Node) || childRef.current.contains(e.target as Node);
+    }, [popoverRef]);
+
+    const handleMouseUp = useCallback((e: MouseEvent) => {
+      window.preventPopoverClose =
+        !popoverRef.current.contains(e.target as Node) &&
+        !childRef.current.contains(e.target as Node) &&
+        window.clickStartedInPopover;
+    }, [popoverRef]);
 
     const handleWindowResize = useCallback(() => {
       window.requestAnimationFrame(() => positionPopover());
@@ -185,9 +202,13 @@ export const Popover = forwardRef<HTMLElement, PopoverProps>(
     useEffect(() => {
       window.addEventListener('click', handleOnClickOutside);
       window.addEventListener('resize', handleWindowResize);
+      popoverRef.current.addEventListener('mousedown', handleMouseDown);
+      window.addEventListener('mouseup', handleMouseUp);
       return () => {
         window.removeEventListener('click', handleOnClickOutside);
         window.removeEventListener('resize', handleWindowResize);
+        popoverRef.current.removeEventListener('mousedown', handleMouseDown);
+        window.removeEventListener('mouseup', handleMouseUp);
       };
     }, [handleOnClickOutside, handleWindowResize]);
 
